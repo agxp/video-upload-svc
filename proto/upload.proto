@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package cloudflix.api.video_upload;
+
+service Upload {
+    rpc S3Request(Request) returns (Response) {}
+}
+
+message Request {
+    string filename = 1;
+}
+
+message Response {
+    string presigned_url = 1;
+}
