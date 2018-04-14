@@ -4,12 +4,14 @@ production: build deploy
 
 build:
 	rm -f ./bin/*
+	protoc --proto_path=${GOPATH}/src --micro_out=. --go_out=. -I. proto/upload.proto
 	go get
 	CGO_ENABLED=0 GOOS=linux go build -a -o ./bin/video_upload -installsuffix cgo .
 	docker build -t agxp/router .
 
 build-local:
 	rm -f ./bin/*
+	protoc --proto_path=${GOPATH}/src --micro_out=. --go_out=. -I. proto/upload.proto
 	go get
 	CGO_ENABLED=0 GOOS=linux go build -a -o ./bin/video_upload -installsuffix cgo .
 	@eval $$(minikube docker-env) ;\
@@ -31,8 +33,8 @@ run:
 deploy:
 	docker push agxp/video-upload-svc
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
-	kubectl replace -f ./deployments/deployment.yaml
+	kubectl apply -f ./deployments/deployment.yaml
 
 deploy-local:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
-	kubectl replace -f ./deployments/deployment.yaml
+	kubectl apply -f ./deployments/deployment.yaml

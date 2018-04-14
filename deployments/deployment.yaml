@@ -30,7 +30,7 @@ spec:
           - name: MINIO_SECRET_KEY
             value: "minio123"
           - name: UPDATED_AT
-            value: "Wed Apr 11 00:01:14 PDT 2018"
+            value: "Fri Apr 13 16:41:23 PDT 2018"
           ports:
           - containerPort: 8080
             name: upload-port
