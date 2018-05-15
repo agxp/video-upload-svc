@@ -2,7 +2,7 @@
 // source: proto/upload.proto
 
 /*
-Package cloudflix_api_video_upload is a generated protocol buffer package.
+Package video_upload is a generated protocol buffer package.
 
 It is generated from these files:
 	proto/upload.proto
@@ -11,7 +11,7 @@ It has these top-level messages:
 	Request
 	Response
 */
-package cloudflix_api_video_upload
+package video_upload
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
@@ -55,7 +55,7 @@ func NewUploadClient(serviceName string, c client.Client) UploadClient {
 		c = client.NewClient()
 	}
 	if len(serviceName) == 0 {
-		serviceName = "cloudflix.api.video_upload"
+		serviceName = "video_upload"
 	}
 	return &uploadClient{
 		c:           c,

@@ -14,23 +14,25 @@ spec:
     spec:
         containers:
         - name: video-upload
-          image: video-upload
+          image: video_upload
           imagePullPolicy: Never
-          command: [
-            "./video-upload-svc",
-            "--selector=static",
-            "--server_address=:8080",
-            "--broker_address=:10001"
-          ]
           env:
           - name: MINIO_URL
-            value: "minio-0:9000"
+            value: "minio:9000"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
             value: "minio123"
           - name: UPDATED_AT
             value: "{{ UPDATED_AT }}"
+          - name:  MICRO_REGISTRY
+            value:  kubernetes
+          - name: MICRO_SELECTOR
+            value: cache
+          - name: MICRO_SERVER_ADDRESS
+            value: 0.0.0.0:8080
+          - name: MICRO_BROKER_ADDRESS
+            value: 0.0.0.0:10001
           ports:
           - containerPort: 8080
             name: upload-port

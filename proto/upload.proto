@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package cloudflix.api.video_upload;
+package video_upload;
 
 service Upload {
     rpc S3Request(Request) returns (Response) {}

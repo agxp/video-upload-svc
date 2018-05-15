@@ -6,7 +6,8 @@ import (
 
 	pb "github.com/agxp/cloudflix/video-upload-svc/proto"
 	"github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
+	"time"
+	_ "github.com/micro/go-plugins/registry/kubernetes"
 )
 
 func main() {
@@ -22,10 +23,13 @@ func main() {
 	repo := &UploadRepository{s3}
 
 	// Create a new service. Optionally include some options here.
-	srv := k8s.NewService(
+	srv := micro.NewService(
 
 		// This name must match the package name given in your protobuf definition
-		micro.Name("cloudflix.api.video_upload"),
+		micro.Name("video_upload"),
+		micro.Version("latest"),
+		micro.RegisterTTL(time.Second*30),
+		micro.RegisterInterval(time.Second*10),
 	)
 
 	// Init will parse the command line flags.

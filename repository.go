@@ -1,7 +1,6 @@
 package main
 
 import (
-	pb "github.com/agxp/cloudflix/video-upload-svc/proto"
 	"github.com/minio/minio-go"
 	"log"
 	"os"
@@ -9,24 +8,26 @@ import (
 )
 
 type Repository interface {
-	S3Request(filename string) (*pb.Response, error)
+	S3Request(filename string) (string, error)
 }
 
 type UploadRepository struct {
 	s3 *minio.Client
 }
 
-func (repo *UploadRepository) S3Request(filename string) (*pb.Response, error) {
+// should return string
+func (repo *UploadRepository) S3Request(filename string) (string, error) {
 	log.SetOutput(os.Stdout)
-	var res *pb.Response
-	log.Println("filename: ", filename)
+	log.Printf("%#v\n", "filename: " + filename)
+
 	presignedURL, err := repo.s3.PresignedPutObject("videos", filename, time.Duration(1000)*time.Second)
 	if err != nil {
-		log.Fatalln(filename)
-		return nil, err
+		log.Printf("%#v\n", "FAILED: with filename: " + filename)
+		log.Fatal(err)
+		return "", err
 	}
 
-	res.PresignedUrl = presignedURL.String()
+	log.Print(presignedURL)
 
-	return res, nil
+	return presignedURL.String(), nil
 }

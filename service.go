@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-const topic = "user.created"
-
 type service struct {
 	repo Repository
 }
@@ -21,7 +19,9 @@ func (srv *service) S3Request(ctx context.Context, req *pb.Request, res *pb.Resp
 		log.Fatalln(err)
 		return err
 	}
-	res = url
+
+	res.PresignedUrl = url
+	log.Print("res", res.PresignedUrl)
 
 	return nil
 }
