@@ -18,13 +18,13 @@ spec:
           imagePullPolicy: Never
           env:
           - name: MINIO_URL
-            value: "minio:9000"
+            value: "192.168.99.100:31724"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
             value: "minio123"
           - name: UPDATED_AT
-            value: "Mon May 14 19:10:53 PDT 2018"
+            value: "Tue May 15 22:46:38 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR

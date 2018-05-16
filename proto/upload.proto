@@ -4,7 +4,6 @@ package video_upload;
 
 service Upload {
     rpc S3Request(Request) returns (Response) {}
-	rpc UploadFile(Request) returns (UploadResponse) {}
 }
 
 message Request {
@@ -13,8 +12,4 @@ message Request {
 
 message Response {
     string presigned_url = 1;
-}
-
-message UploadResponse {
-	string error = 1
 }
