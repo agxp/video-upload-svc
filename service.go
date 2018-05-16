@@ -25,3 +25,18 @@ func (srv *service) S3Request(ctx context.Context, req *pb.Request, res *pb.Resp
 
 	return nil
 }
+
+func (srv *service) UploadFile(ctx context.Context, req *pb.Request, res *pb.Response) error {
+	log.SetOutput(os.Stdout)
+
+	error, err := srv.repo.UploadFile(req.Filename)
+	if err != nil {
+		log.Fatalln(err)
+		return err
+	}
+
+	res.Error = error
+	log.Print("res", res.error)
+
+	return nil
+}
