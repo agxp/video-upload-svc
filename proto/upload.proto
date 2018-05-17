@@ -4,6 +4,9 @@ package video_upload;
 
 service Upload {
     rpc S3Request(Request) returns (Response) {}
+    rpc UploadFile(UploadRequest) returns (UploadResponse) {}
+    rpc WriteVideoProperties(PropertyRequest) returns (PropertyResponse) {}
+    rpc UploadFinish(UploadFinishRequest) returns (UploadFinishResponse) {}
 }
 
 message Request {
@@ -13,3 +16,32 @@ message Request {
 message Response {
     string presigned_url = 1;
 }
+
+message UploadRequest {
+    string filename = 1;
+    string title = 2;
+    string description = 3;
+}
+
+message UploadResponse {
+    string id = 1;
+    string presigned_url = 2;
+}
+
+message PropertyRequest {
+    string filename = 1;
+    string title = 2;
+    string description = 3;
+}
+
+message PropertyResponse {
+    string id = 1;
+    string filepath = 2;
+}
+
+message UploadFinishRequest {
+    string id = 1;
+}
+
+message UploadFinishResponse {}
+

@@ -20,7 +20,12 @@ func main() {
 		log.Fatalf("Could not connect to store: %v", err)
 	}
 
-	repo := &UploadRepository{s3}
+	pg, err := ConnectToPostgres()
+	if err != nil {
+		log.Fatalf("Could not connect to database: %v", err)
+	}
+
+	repo := &UploadRepository{s3, pg}
 
 	// Create a new service. Optionally include some options here.
 	srv := micro.NewService(

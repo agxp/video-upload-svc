@@ -10,6 +10,12 @@ It is generated from these files:
 It has these top-level messages:
 	Request
 	Response
+	UploadRequest
+	UploadResponse
+	PropertyRequest
+	PropertyResponse
+	UploadFinishRequest
+	UploadFinishResponse
 */
 package video_upload
 
@@ -43,6 +49,9 @@ var _ server.Option
 
 type UploadClient interface {
 	S3Request(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error)
+	UploadFile(ctx context.Context, in *UploadRequest, opts ...client.CallOption) (*UploadResponse, error)
+	WriteVideoProperties(ctx context.Context, in *PropertyRequest, opts ...client.CallOption) (*PropertyResponse, error)
+	UploadFinish(ctx context.Context, in *UploadFinishRequest, opts ...client.CallOption) (*UploadFinishResponse, error)
 }
 
 type uploadClient struct {
@@ -73,10 +82,43 @@ func (c *uploadClient) S3Request(ctx context.Context, in *Request, opts ...clien
 	return out, nil
 }
 
+func (c *uploadClient) UploadFile(ctx context.Context, in *UploadRequest, opts ...client.CallOption) (*UploadResponse, error) {
+	req := c.c.NewRequest(c.serviceName, "Upload.UploadFile", in)
+	out := new(UploadResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadClient) WriteVideoProperties(ctx context.Context, in *PropertyRequest, opts ...client.CallOption) (*PropertyResponse, error) {
+	req := c.c.NewRequest(c.serviceName, "Upload.WriteVideoProperties", in)
+	out := new(PropertyResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadClient) UploadFinish(ctx context.Context, in *UploadFinishRequest, opts ...client.CallOption) (*UploadFinishResponse, error) {
+	req := c.c.NewRequest(c.serviceName, "Upload.UploadFinish", in)
+	out := new(UploadFinishResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for Upload service
 
 type UploadHandler interface {
 	S3Request(context.Context, *Request, *Response) error
+	UploadFile(context.Context, *UploadRequest, *UploadResponse) error
+	WriteVideoProperties(context.Context, *PropertyRequest, *PropertyResponse) error
+	UploadFinish(context.Context, *UploadFinishRequest, *UploadFinishResponse) error
 }
 
 func RegisterUploadHandler(s server.Server, hdlr UploadHandler, opts ...server.HandlerOption) {
@@ -89,4 +131,16 @@ type Upload struct {
 
 func (h *Upload) S3Request(ctx context.Context, in *Request, out *Response) error {
 	return h.UploadHandler.S3Request(ctx, in, out)
+}
+
+func (h *Upload) UploadFile(ctx context.Context, in *UploadRequest, out *UploadResponse) error {
+	return h.UploadHandler.UploadFile(ctx, in, out)
+}
+
+func (h *Upload) WriteVideoProperties(ctx context.Context, in *PropertyRequest, out *PropertyResponse) error {
+	return h.UploadHandler.WriteVideoProperties(ctx, in, out)
+}
+
+func (h *Upload) UploadFinish(ctx context.Context, in *UploadFinishRequest, out *UploadFinishResponse) error {
+	return h.UploadHandler.UploadFinish(ctx, in, out)
 }

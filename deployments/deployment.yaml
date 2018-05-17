@@ -23,8 +23,14 @@ spec:
             value: "minio"
           - name: MINIO_SECRET_KEY
             value: "minio123"
+          - name: PG_HOST
+            value: "postgres-postgresql"
+          - name: PG_USER
+            value: "postgres"
+          - name: PG_PASSWORD
+            value: "postgres123"
           - name: UPDATED_AT
-            value: "Tue May 15 22:46:38 PDT 2018"
+            value: "Wed May 16 20:02:40 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR
