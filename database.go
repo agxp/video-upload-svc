@@ -22,6 +22,9 @@ func ConnectToS3() (*minio.Client, error) {
 		log.Fatalln(err)
 	}
 
+	minioClient.SetAppInfo("video-upload-svc", "1.0.0")
+	minioClient.TraceOn(nil)
+
 	log.Printf("%#v\n", minioClient) // minioClient is now setup
 	log.Printf("%#v\n", "hello, i just finished printing minioclient")
 
@@ -38,7 +41,7 @@ func ConnectToS3() (*minio.Client, error) {
 }
 
 func ConnectToPostgres() (*sql.DB, error ) {
-	PG_HOST := os.Getenv("PG_HOST")
+	PG_HOST := os.Getenv("POSTGRES_POSTGRESQL_SERVICE_HOST")
 	PG_USER := os.Getenv("PG_USER")
 	PG_PASSWORD := os.Getenv("PG_PASSWORD")
 	DB_NAME := "videos"

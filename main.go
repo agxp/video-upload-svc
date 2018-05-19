@@ -8,17 +8,38 @@ import (
 	"github.com/micro/go-micro"
 	"time"
 	_ "github.com/micro/go-plugins/registry/kubernetes"
-	opentracing "github.com/opentracing/opentracing-go"
-	zipkin "github.com/openzipkin/zipkin-go-opentracing"
-	"github.com/agxp/cloudflix/tracer"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	micro_opentracing "github.com/micro/go-plugins/wrapper/trace/opentracing"
+	"github.com/opentracing/opentracing-go"
 )
 
-func main() {
-	log.SetOutput(os.Stdout)
+var (
+	tracer *opentracing.Tracer
+)
 
-	zipkin_addr := os.Getenv("ZIPKIN_ADDR")
-	hostname, _ := os.Hostname()
-	InitTracer(zipkin_addr, hostname, "video_upload")
+
+func main() {
+
+	cfg, err := jaegercfg.FromEnv()
+	if err != nil {
+		// parsing errors might happen here, such as when we get a string where we expect a number
+		log.Printf("Could not parse Jaeger env vars: %s", err.Error())
+		return
+	}
+
+	t, closer, err := cfg.NewTracer()
+	if err != nil {
+		log.Printf("Could not initialize jaeger tracer: %s", err.Error())
+		return
+	}
+	tracer = &t
+	opentracing.SetGlobalTracer(t)
+	defer closer.Close()
+
+	(*tracer).StartSpan("init_tracing").Finish()
+	// continue main()
+
+	log.SetOutput(os.Stdout)
 
 	// Creates a database connection and handles
 	// closing it again before exit.
@@ -32,7 +53,7 @@ func main() {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
 
-	repo := &UploadRepository{s3, pg}
+	repo := &UploadRepository{s3, pg, tracer}
 
 	// Create a new service. Optionally include some options here.
 	srv := micro.NewService(
@@ -42,7 +63,7 @@ func main() {
 		micro.Version("latest"),
 		micro.RegisterTTL(time.Second*30),
 		micro.RegisterInterval(time.Second*10),
-		micro.WrapHandler(trace.ServerWrapper),
+		micro.WrapHandler(micro_opentracing.NewHandlerWrapper(*tracer)),
 	)
 
 	// Init will parse the command line flags.
@@ -52,27 +73,10 @@ func main() {
 	// publisher := micro.NewPublisher("user.created", srv.Client())
 
 	// Register handler
-	pb.RegisterUploadHandler(srv.Server(), &service{repo})
+	pb.RegisterUploadHandler(srv.Server(), &service{repo, tracer})
 
 	// Run the server
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func InitTracer(zipkinURL string, hostPost string, serviceName string) {
-	collector, err := zipkin.NewHTTPCollector(zipkinURL)
-	if err != nil {
-		log.Fatalf("unable to create Zipkin HTTP collector: %v", err)
-		return
-	}
-	tracer, err := zipkin.NewTracer(
-		zipkin.NewRecorder(collector, false, hostPost, serviceName),
-	)
-	if err != nil {
-		log.Fatalf("unable to create Zipkin tracer: %v", err)
-		return
-	}
-	opentracing.InitGlobalTracer(tracer)
-	return
 }

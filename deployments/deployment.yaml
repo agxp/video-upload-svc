@@ -11,6 +11,8 @@ spec:
     metadata:
       labels:
         app: video-upload
+      annotations:
+        prometheus.io/scrape: "true"
     spec:
         containers:
         - name: video-upload
@@ -18,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: MINIO_URL
-            value: "192.168.99.100:31724"
+            value: "192.168.1.74:31130"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
@@ -30,7 +32,7 @@ spec:
           - name: PG_PASSWORD
             value: "postgres123"
           - name: UPDATED_AT
-            value: "Thu May 17 15:17:55 PDT 2018"
+            value: "Fri May 18 22:59:19 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR
@@ -39,6 +41,20 @@ spec:
             value: 0.0.0.0:8080
           - name: MICRO_BROKER_ADDRESS
             value: 0.0.0.0:10001
+          - name: JAEGER_SERVICE_NAME
+            value: video-upload-svc
+          - name: JAEGER_AGENT_HOST
+            value: jaeger-agent
+          - name: JAEGER_SAMPLER_TYPE
+            value: const
+          - name: JAEGER_SAMPLER_PARAM
+            value: "1"
+          - name: JAEGER_REPORTER_LOG_SPANS
+            value: "true"
+          - name: OPENTRACING_METRICS_EXPORTER_HTTP_PATH
+            value: "/metrics"
           ports:
-          - containerPort: 8080
-            name: upload-port
+          - name: upload-port
+            containerPort: 8080
+          - name: prometheus
+            containerPort: 9099

@@ -9,4 +9,4 @@ spec:
     protocol: TCP
   selector:
     app: video-upload
-  type: NodePort
+  type: LoadBalancer
