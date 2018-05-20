@@ -32,7 +32,7 @@ spec:
           - name: PG_PASSWORD
             value: "postgres123"
           - name: UPDATED_AT
-            value: "Fri May 18 22:59:19 PDT 2018"
+            value: "Sat May 19 21:09:40 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR

@@ -10,12 +10,13 @@ import (
 	"database/sql"
 	"github.com/opentracing/opentracing-go"
 	"context"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
-	S3Request(p opentracing.Span, filename string) (string, error)
-	WriteVideoProperties(p opentracing.Span, filename string, title string, description string) (string, string, error)
-	UploadFinish(p opentracing.Span, id string) (error)
+	S3Request(p opentracing.SpanContext, filename string) (string, error)
+	WriteVideoProperties(p opentracing.SpanContext, filename string, title string, description string) (string, string, error)
+	UploadFinish(p opentracing.SpanContext, id string) (error)
 }
 
 type UploadRepository struct {
@@ -25,13 +26,8 @@ type UploadRepository struct {
 }
 
 // should return string
-func (repo *UploadRepository) S3Request(p opentracing.Span, filename string) (string, error) {
-	var sp opentracing.Span
-	if p != nil {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "S3Request_Repo", opentracing.ChildOf(p.Context()))
-	} else {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "S3Request_Repo")
-	}
+func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename string) (string, error) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "S3Request_Repo", opentracing.ChildOf(parent))
 
 	sp.LogKV("filename", filename)
 
@@ -58,19 +54,14 @@ func (repo *UploadRepository) S3Request(p opentracing.Span, filename string) (st
 	return presignedURL.String(), nil
 }
 
-func (repo *UploadRepository) WriteVideoProperties(p opentracing.Span, filename string, title string, description string) (string, string, error) {
-	var sp opentracing.Span
-	if p != nil {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Repo", opentracing.ChildOf(p.Context()))
-	} else {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Repo")
-	}
+func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, filename string, title string, description string) (string, string, error) {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Repo", opentracing.ChildOf(p))
 
 	sp.LogKV("filename", filename,"title", title,"description", description)
 
 	defer sp.Finish()
-	log.SetOutput(os.Stdout)
-	log.Printf("%#v\n", "filename: " + filename)
+
+	logger.Info("filename", zap.String("filename", filename))
 
 	objectName := time.Now().String() + filename
 	hash := md5.Sum([]byte(objectName))
@@ -87,7 +78,7 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.Span, filename 
 
 	dbSP, _ := opentracing.StartSpanFromContext(context.Background(),"PG_WriteVideoProperties", opentracing.ChildOf(sp.Context()))
 
-	dbSP.LogKV("insertQuery", insertQuery, "id", id, "title", title, "description", description, "filePath", filePath)
+	dbSP.LogKV("id", id, "title", title, "description", description, "filePath", filePath)
 
 	_, err := repo.pg.Exec(insertQuery, id, title, description, now, false, now,
 							now.Add(time.Hour * 24), filePath, 0, 0, 0)
@@ -103,14 +94,9 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.Span, filename 
 	return id, filePath, nil
 }
 
-func (repo *UploadRepository) UploadFinish(p opentracing.Span, id string) error {
-	var sp opentracing.Span
-	if p != nil {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Repo", opentracing.ChildOf(p.Context()))
-	} else {
-		sp, _ = opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Repo")
-	}
-	
+func (repo *UploadRepository) UploadFinish(p opentracing.SpanContext, id string) error {
+	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Repo", opentracing.ChildOf(p))
+
 	sp.LogKV("id", id)
 
 	defer sp.Finish()
@@ -118,6 +104,7 @@ func (repo *UploadRepository) UploadFinish(p opentracing.Span, id string) error 
 
 	dbSP, _ := opentracing.StartSpanFromContext(context.Background(), "PG_UploadFinish", opentracing.ChildOf(sp.Context()))
 	dbSP.LogKV("updateQuery", updateQuery, "id", id)
+
 	_, err := repo.pg.Exec(updateQuery, id, time.Now())
 	if err != nil {
 		log.Fatal(err)

@@ -1,9 +1,6 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	pb "github.com/agxp/cloudflix/video-upload-svc/proto"
 	"github.com/micro/go-micro"
 	"time"
@@ -11,27 +8,43 @@ import (
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	micro_opentracing "github.com/micro/go-plugins/wrapper/trace/opentracing"
 	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-lib/metrics/prometheus"
+	"github.com/uber/jaeger-lib/metrics"
+	"go.uber.org/zap"
+	zapWrapper "github.com/uber/jaeger-client-go/log/zap"
 )
 
 var (
 	tracer *opentracing.Tracer
+	logger         *zap.Logger
+	metricsFactory metrics.Factory
 )
 
 
 func main() {
 
+	logger, _ = zap.NewDevelopment()
+	metricsFactory = prometheus.New()
+
+	zapLogger := logger.With(zap.String("service", "video-upload-svc"))
+	jeagerLogger := zapWrapper.NewLogger(zapLogger)
+
 	cfg, err := jaegercfg.FromEnv()
 	if err != nil {
 		// parsing errors might happen here, such as when we get a string where we expect a number
-		log.Printf("Could not parse Jaeger env vars: %s", err.Error())
+		zapLogger.Error("Could not parse Jaeger env vars: %s", zap.Error(err))
 		return
 	}
 
-	t, closer, err := cfg.NewTracer()
+	t, closer, err := cfg.NewTracer(
+		jaegercfg.Metrics(metricsFactory),
+		jaegercfg.Logger(jeagerLogger),
+	)
 	if err != nil {
-		log.Printf("Could not initialize jaeger tracer: %s", err.Error())
+		jeagerLogger.Infof("Could not initialize jaeger tracer: %s", err)
 		return
 	}
+
 	tracer = &t
 	opentracing.SetGlobalTracer(t)
 	defer closer.Close()
@@ -39,18 +52,16 @@ func main() {
 	(*tracer).StartSpan("init_tracing").Finish()
 	// continue main()
 
-	log.SetOutput(os.Stdout)
-
 	// Creates a database connection and handles
 	// closing it again before exit.
 	s3, err := ConnectToS3()
 	if err != nil {
-		log.Fatalf("Could not connect to store: %v", err)
+		jeagerLogger.Error("Could not connect to store: " + err.Error())
 	}
 
 	pg, err := ConnectToPostgres()
 	if err != nil {
-		log.Fatalf("Could not connect to database: %v", err)
+		jeagerLogger.Error("Could not connect to database: " + err.Error())
 	}
 
 	repo := &UploadRepository{s3, pg, tracer}
@@ -73,10 +84,10 @@ func main() {
 	// publisher := micro.NewPublisher("user.created", srv.Client())
 
 	// Register handler
-	pb.RegisterUploadHandler(srv.Server(), &service{repo, tracer})
+	pb.RegisterUploadHandler(srv.Server(), &service{repo, tracer, zapLogger})
 
 	// Run the server
 	if err := srv.Run(); err != nil {
-		log.Fatal(err)
+		jeagerLogger.Error(err.Error())
 	}
 }

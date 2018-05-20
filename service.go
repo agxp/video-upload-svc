@@ -3,54 +3,51 @@ package main
 import (
 	pb "github.com/agxp/cloudflix/video-upload-svc/proto"
 	"golang.org/x/net/context"
-	"log"
-	"os"
 	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 )
 
 type service struct {
 	repo Repository
 	tracer *opentracing.Tracer
+	logger *zap.Logger
 }
 
 func (srv *service) S3Request(ctx context.Context, req *pb.Request, res *pb.Response) error {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(), "S3Request_Service")
+
+	logger.Info("Request for S3Request_Service received")
 	defer sp.Finish()
 
-	log.SetOutput(os.Stdout)
-
-	url, err := srv.repo.S3Request(sp, req.Filename)
+	url, err := srv.repo.S3Request(sp.Context(), req.Filename)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Error("failed S3Request", zap.Error(err))
 		return err
 	}
 
 	res.PresignedUrl = url
-	log.Print("res", res.PresignedUrl)
-
 	return nil
 }
 
 func (srv *service) UploadFile(ctx context.Context, req *pb.UploadRequest, res *pb.UploadResponse) error {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFile_Service")
+	logger.Info("Request for UploadFile_Service received")
 	defer sp.Finish()
-	log.SetOutput(os.Stdout)
 
-	id, filePath, err := srv.repo.WriteVideoProperties(sp, req.Filename, req.Title, req.Description)
+	id, filePath, err := srv.repo.WriteVideoProperties(sp.Context(), req.Filename, req.Title, req.Description)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Error("failed WriteVideoProperties", zap.Error(err))
 		return err
 	}
 
-	url, err := srv.repo.S3Request(sp, filePath)
+	url, err := srv.repo.S3Request(sp.Context(), filePath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("failed S3Request", zap.Error(err))
 		return err
 	}
 
 	res.Id = id
 	res.PresignedUrl = url
-	log.Print("res", res)
 
 	return nil
 }
@@ -64,10 +61,13 @@ func (srv *service) WriteVideoProperties(ctx context.Context, req *pb.PropertyRe
 
 func (srv *service) UploadFinish(ctx context.Context, req *pb.UploadFinishRequest, res *pb.UploadFinishResponse) error {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(),"UploadFile_Service")
+	logger.Info("Request for UploadFinish_Service received")
+
 	defer sp.Finish()
-	err := srv.repo.UploadFinish(sp, req.Id)
+
+	err := srv.repo.UploadFinish(sp.Context(), req.Id)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error("failed UploadFinish", zap.Error(err))
 		return err
 	}
 	return nil
