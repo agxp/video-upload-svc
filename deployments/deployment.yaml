@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: MINIO_URL
-            value: "192.168.1.74:31130"
+            value: "192.168.1.74:30366"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
@@ -32,7 +32,7 @@ spec:
           - name: PG_PASSWORD
             value: "postgres123"
           - name: UPDATED_AT
-            value: "Tue May 22 16:24:57 PDT 2018"
+            value: "Wed May 23 13:34:12 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR
@@ -57,4 +57,4 @@ spec:
           - name: upload-port
             containerPort: 8080
           - name: prometheus
-            containerPort: 9099
+            containerPort: 9090
