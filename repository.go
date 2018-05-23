@@ -1,27 +1,27 @@
 package main
 
 import (
+	"context"
+	"crypto/md5"
+	"database/sql"
+	"encoding/hex"
 	"github.com/minio/minio-go"
+	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"time"
-	"crypto/md5"
-	"encoding/hex"
-	"database/sql"
-	"github.com/opentracing/opentracing-go"
-	"context"
-	"go.uber.org/zap"
 )
 
 type Repository interface {
 	S3Request(p opentracing.SpanContext, filename string) (string, error)
 	WriteVideoProperties(p opentracing.SpanContext, filename string, title string, description string) (string, string, error)
-	UploadFinish(p opentracing.SpanContext, id string) (error)
+	UploadFinish(p opentracing.SpanContext, id string) error
 }
 
 type UploadRepository struct {
-	s3 *minio.Client
-	pg *sql.DB
+	s3     *minio.Client
+	pg     *sql.DB
 	tracer *opentracing.Tracer
 }
 
@@ -31,10 +31,9 @@ func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename
 
 	sp.LogKV("filename", filename)
 
-
 	defer sp.Finish()
 	log.SetOutput(os.Stdout)
-	log.Printf("%#v\n", "filename: " + filename)
+	log.Printf("%#v\n", "filename: "+filename)
 
 	psSP, _ := opentracing.StartSpanFromContext(context.Background(), "S3_PresignedPutObject", opentracing.ChildOf(sp.Context()))
 
@@ -42,8 +41,8 @@ func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename
 
 	presignedURL, err := repo.s3.PresignedPutObject("videos", filename, time.Hour*24)
 	if err != nil {
-		log.Printf("%#v\n", "FAILED: with filename: " + filename)
-		log.Fatal(err)
+		log.Printf("%#v\n", "FAILED: with filename: "+filename)
+		log.Print(err)
 		psSP.Finish()
 		return "", err
 	}
@@ -57,7 +56,7 @@ func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename
 func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, filename string, title string, description string) (string, string, error) {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Repo", opentracing.ChildOf(p))
 
-	sp.LogKV("filename", filename,"title", title,"description", description)
+	sp.LogKV("filename", filename, "title", title, "description", description)
 
 	defer sp.Finish()
 
@@ -76,20 +75,19 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, fi
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	now := time.Now()
 
-	dbSP, _ := opentracing.StartSpanFromContext(context.Background(),"PG_WriteVideoProperties", opentracing.ChildOf(sp.Context()))
+	dbSP, _ := opentracing.StartSpanFromContext(context.Background(), "PG_WriteVideoProperties", opentracing.ChildOf(sp.Context()))
 
 	dbSP.LogKV("id", id, "title", title, "description", description, "filePath", filePath)
 
 	_, err := repo.pg.Exec(insertQuery, id, title, description, now, false, now,
-							now.Add(time.Hour * 24), filePath, 0, 0, 0)
+		now.Add(time.Hour*24), filePath, 0, 0, 0)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		dbSP.Finish()
 		return "", "", err
 	}
 	dbSP.Finish()
-
 
 	return id, filePath, nil
 }
@@ -107,7 +105,7 @@ func (repo *UploadRepository) UploadFinish(p opentracing.SpanContext, id string)
 
 	_, err := repo.pg.Exec(updateQuery, id, time.Now())
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		dbSP.Finish()
 		return err
 	}
