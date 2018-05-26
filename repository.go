@@ -27,7 +27,7 @@ type UploadRepository struct {
 
 // should return string
 func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename string) (string, error) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "S3Request_Repo", opentracing.ChildOf(parent))
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "S3Request_Repo", opentracing.ChildOf(parent))
 
 	sp.LogKV("filename", filename)
 
@@ -35,7 +35,7 @@ func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename
 	log.SetOutput(os.Stdout)
 	log.Printf("%#v\n", "filename: "+filename)
 
-	psSP, _ := opentracing.StartSpanFromContext(context.Background(), "S3_PresignedPutObject", opentracing.ChildOf(sp.Context()))
+	psSP, _ := opentracing.StartSpanFromContext(context.TODO(), "S3_PresignedPutObject", opentracing.ChildOf(sp.Context()))
 
 	psSP.LogKV("filename", filename)
 
@@ -54,7 +54,7 @@ func (repo *UploadRepository) S3Request(parent opentracing.SpanContext, filename
 }
 
 func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, filename string, title string, description string) (string, string, error) {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Repo", opentracing.ChildOf(p))
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "WriteVideoProperties_Repo", opentracing.ChildOf(p))
 
 	sp.LogKV("filename", filename, "title", title, "description", description)
 
@@ -75,7 +75,7 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, fi
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	now := time.Now()
 
-	dbSP, _ := opentracing.StartSpanFromContext(context.Background(), "PG_WriteVideoProperties", opentracing.ChildOf(sp.Context()))
+	dbSP, _ := opentracing.StartSpanFromContext(context.TODO(), "PG_WriteVideoProperties", opentracing.ChildOf(sp.Context()))
 
 	dbSP.LogKV("id", id, "title", title, "description", description, "filePath", filePath)
 
@@ -93,14 +93,14 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, fi
 }
 
 func (repo *UploadRepository) UploadFinish(p opentracing.SpanContext, id string) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFinish_Repo", opentracing.ChildOf(p))
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "UploadFinish_Repo", opentracing.ChildOf(p))
 
 	sp.LogKV("id", id)
 
 	defer sp.Finish()
 	updateQuery := `UPDATE videos SET uploaded=true WHERE id=$1 and timeout_date > $2`
 
-	dbSP, _ := opentracing.StartSpanFromContext(context.Background(), "PG_UploadFinish", opentracing.ChildOf(sp.Context()))
+	dbSP, _ := opentracing.StartSpanFromContext(context.TODO(), "PG_UploadFinish", opentracing.ChildOf(sp.Context()))
 	dbSP.LogKV("updateQuery", updateQuery, "id", id)
 
 	_, err := repo.pg.Exec(updateQuery, id, time.Now())

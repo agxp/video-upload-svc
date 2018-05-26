@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: video-upload
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: video-upload
@@ -32,7 +32,7 @@ spec:
           - name: PG_PASSWORD
             value: "postgres123"
           - name: UPDATED_AT
-            value: "Wed May 23 13:34:12 PDT 2018"
+            value: "Sat May 26 13:42:57 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR

@@ -14,7 +14,7 @@ type service struct {
 }
 
 func (srv *service) S3Request(ctx context.Context, req *pb.Request, res *pb.Response) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "S3Request_Service")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "S3Request_Service")
 
 	logger.Info("Request for S3Request_Service received")
 	defer sp.Finish()
@@ -30,7 +30,7 @@ func (srv *service) S3Request(ctx context.Context, req *pb.Request, res *pb.Resp
 }
 
 func (srv *service) UploadFile(ctx context.Context, req *pb.UploadRequest, res *pb.UploadResponse) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "UploadFile_Service")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "UploadFile_Service")
 	logger.Info("Request for UploadFile_Service received")
 	defer sp.Finish()
 
@@ -54,13 +54,13 @@ func (srv *service) UploadFile(ctx context.Context, req *pb.UploadRequest, res *
 
 
 func (srv *service) WriteVideoProperties(ctx context.Context, req *pb.PropertyRequest, res *pb.PropertyResponse) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "WriteVideoProperties_Service")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(), "WriteVideoProperties_Service")
 	defer sp.Finish()
 	return nil
 }
 
 func (srv *service) UploadFinish(ctx context.Context, req *pb.UploadFinishRequest, res *pb.UploadFinishResponse) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(),"UploadFile_Service")
+	sp, _ := opentracing.StartSpanFromContext(context.TODO(),"UploadFile_Service")
 	logger.Info("Request for UploadFinish_Service received")
 
 	defer sp.Finish()
