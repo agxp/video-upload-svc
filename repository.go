@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"github.com/agxp/cloudflix/video-encoding-svc/proto"
 )
 
 type Repository interface {
@@ -23,6 +24,7 @@ type UploadRepository struct {
 	s3     *minio.Client
 	pg     *sql.DB
 	tracer *opentracing.Tracer
+	enc    encoder.EncodeClient
 }
 
 // should return string
@@ -65,7 +67,8 @@ func (repo *UploadRepository) WriteVideoProperties(p opentracing.SpanContext, fi
 	objectName := time.Now().String() + filename
 	hash := md5.Sum([]byte(objectName))
 	id := hex.EncodeToString(hash[:])
-	filePath := id + "/" + filename
+
+	filePath := id + "/" + id
 
 	insertQuery := `
 	INSERT INTO videos(
@@ -110,5 +113,18 @@ func (repo *UploadRepository) UploadFinish(p opentracing.SpanContext, id string)
 		return err
 	}
 	dbSP.Finish()
+
+	encodeSP, _ := opentracing.StartSpanFromContext(context.TODO(), "Encode", opentracing.ChildOf(sp.Context()))
+	defer encodeSP.Finish()
+
+	_, err = repo.enc.Encode(context.TODO(), &encoder.Request{
+		VideoId:id,
+	})
+	if err != nil {
+		log.Print(err)
+		encodeSP.Finish()
+		return err
+	}
+
 	return nil
 }

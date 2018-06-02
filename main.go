@@ -12,6 +12,8 @@ import (
 	"github.com/uber/jaeger-lib/metrics"
 	"go.uber.org/zap"
 	zapWrapper "github.com/uber/jaeger-client-go/log/zap"
+	"github.com/agxp/cloudflix/video-encoding-svc/proto"
+	"github.com/micro/go-micro/client"
 )
 
 var (
@@ -64,7 +66,9 @@ func main() {
 		jeagerLogger.Error("Could not connect to database: " + err.Error())
 	}
 
-	repo := &UploadRepository{s3, pg, tracer}
+	enc := encoder.NewEncodeClient("encoder", client.DefaultClient)
+
+	repo := &UploadRepository{s3, pg, tracer, enc}
 
 	// Create a new service. Optionally include some options here.
 	srv := micro.NewService(
