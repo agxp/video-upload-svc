@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: video-upload
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: video-upload
@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: MINIO_URL
-            value: "192.168.1.74:30366"
+            value: "192.168.1.74:32218"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
@@ -32,7 +32,7 @@ spec:
           - name: PG_PASSWORD
             value: "postgres123"
           - name: UPDATED_AT
-            value: "Sat May 26 13:42:57 PDT 2018"
+            value: "Fri Jun  1 17:33:29 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR

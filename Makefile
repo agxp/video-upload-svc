@@ -36,6 +36,7 @@ deploy:
 	kubectl apply -f ./deployments/deployment.yaml
 
 deploy-local:
-	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yaml
+	sed "s,{{ MINIO_URL }},$(shell minikube service minio --url),g" ./deployments/deployment.tmpl | sed "s,http://,,g" > ./deployments/deployment.tmpl1
+	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl1 > ./deployments/deployment.yaml
 	kubectl apply -f ./deployments/deployment.yaml
 	kubectl apply -f ./deployments/service.yaml

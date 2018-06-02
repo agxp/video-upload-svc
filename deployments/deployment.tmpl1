@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Never
           env:
           - name: MINIO_URL
-            value: "{{ MINIO_URL }}"
+            value: "192.168.1.74:32218"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
