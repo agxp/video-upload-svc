@@ -35,12 +35,14 @@ spec:
             value: "{{ UPDATED_AT }}"
           - name:  MICRO_REGISTRY
             value:  kubernetes
+          - name:  MICRO_BROKER
+            value:  rabbitmq
           - name: MICRO_SELECTOR
             value: cache
           - name: MICRO_SERVER_ADDRESS
             value: 0.0.0.0:8080
           - name: MICRO_BROKER_ADDRESS
-            value: 0.0.0.0:10001
+            value: amqp://admin:password@rabbit-rabbitmq:5672
           - name: JAEGER_SERVICE_NAME
             value: video-upload-svc
           - name: JAEGER_AGENT_HOST

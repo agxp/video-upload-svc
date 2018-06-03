@@ -12,6 +12,9 @@ import (
 	"os"
 	"time"
 	"github.com/agxp/cloudflix/video-encoding-svc/proto"
+	"github.com/micro/go-micro/broker"
+	"fmt"
+
 )
 
 type Repository interface {
@@ -25,6 +28,7 @@ type UploadRepository struct {
 	pg     *sql.DB
 	tracer *opentracing.Tracer
 	enc    encoder.EncodeClient
+	rabbit broker.Broker
 }
 
 // should return string
@@ -114,17 +118,37 @@ func (repo *UploadRepository) UploadFinish(p opentracing.SpanContext, id string)
 	}
 	dbSP.Finish()
 
-	encodeSP, _ := opentracing.StartSpanFromContext(context.TODO(), "Encode", opentracing.ChildOf(sp.Context()))
+	encodeSP, _ := opentracing.StartSpanFromContext(context.Background(), "Encode", opentracing.ChildOf(sp.Context()))
 	defer encodeSP.Finish()
 
-	_, err = repo.enc.Encode(context.TODO(), &encoder.Request{
-		VideoId:id,
-	})
-	if err != nil {
-		log.Print(err)
-		encodeSP.Finish()
-		return err
+	//_, err = repo.enc.Encode(context.Background(), &encoder.Request{
+	//	VideoId:id,
+	//})
+
+	//if err != nil {
+	//	log.Print(err)
+	//	encodeSP.Finish()
+	//	return err
+	//}
+	//ev := &encoder.Request{
+	//	VideoId: id,
+	//}
+
+	msg := &broker.Message{
+		Header: map[string]string{
+			"id": id,
+		},
+		Body: []byte(id),
 	}
+	if err := repo.rabbit.Publish("service.topic", msg); err != nil {
+		log.Printf("[pub] failed: %v", err)
+	} else {
+		fmt.Println("[pub] pubbed message:", string(msg.Body))
+	}
+
+	//if err := repo.encodePublisher.Publish(context.Background(), ev); err != nil {
+	//	log.Printf("error publishing %v", err)
+	//}
 
 	return nil
 }

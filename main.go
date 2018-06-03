@@ -5,6 +5,7 @@ import (
 	"github.com/micro/go-micro"
 	"time"
 	_ "github.com/micro/go-plugins/registry/kubernetes"
+	_ "github.com/micro/go-plugins/broker/rabbitmq"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	micro_opentracing "github.com/micro/go-plugins/wrapper/trace/opentracing"
 	"github.com/opentracing/opentracing-go"
@@ -14,6 +15,9 @@ import (
 	zapWrapper "github.com/uber/jaeger-client-go/log/zap"
 	"github.com/agxp/cloudflix/video-encoding-svc/proto"
 	"github.com/micro/go-micro/client"
+	"github.com/micro/go-micro/broker"
+	"log"
+	"github.com/micro/go-plugins/broker/rabbitmq"
 )
 
 var (
@@ -68,7 +72,6 @@ func main() {
 
 	enc := encoder.NewEncodeClient("encoder", client.DefaultClient)
 
-	repo := &UploadRepository{s3, pg, tracer, enc}
 
 	// Create a new service. Optionally include some options here.
 	srv := micro.NewService(
@@ -85,7 +88,19 @@ func main() {
 	srv.Init()
 
 	// Will comment this out now to save having to run this locally
-	// publisher := micro.NewPublisher("user.created", srv.Client())
+	//encodePublisher := micro.NewPublisher("encoder_pubsub", srv.Client())
+	r := rabbitmq.NewBroker(broker.Addrs("amqp://admin:password@rabbit-rabbitmq:5672"))
+
+	if err := r.Init(); err != nil {
+		log.Fatalf("Broker Init error: %v", err)
+	}
+	if err := r.Connect(); err != nil {
+		log.Fatalf("Broker Connect error: %v", err)
+	}
+
+
+
+	repo := &UploadRepository{s3, pg, tracer, enc, r}
 
 	// Register handler
 	pb.RegisterUploadHandler(srv.Server(), &service{repo, tracer, zapLogger})
